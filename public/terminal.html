@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code Web Shell</title>
+    <link rel="stylesheet" href="https://unpkg.com/xterm@5.3.0/css/xterm.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #0c0c0c;
+            color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title {
+            color: #4a9eff;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .header-btn {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+        }
+
+        .header-btn:hover {
+            background: #555;
+        }
+
+        .logout-btn {
+            background: #ff4444;
+        }
+
+        .logout-btn:hover {
+            background: #cc3333;
+        }
+
+        .main-container {
+            height: calc(100vh - 60px);
+            display: flex;
+        }
+
+        .left-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tabs-container {
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+        }
+
+        #tabs {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .tab {
+            background: #333;
+            border: none;
+            color: #ccc;
+            padding: 8px 16px;
+            margin: 5px 2px;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            background: #0c0c0c;
+            color: #fff;
+        }
+
+        .tab:hover:not(.active) {
+            background: #444;
+        }
+
+        .tab-close {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            padding: 2px;
+            border-radius: 2px;
+            font-size: 10px;
+        }
+
+        .tab-close:hover {
+            background: #555;
+            color: #fff;
+        }
+
+        .new-tab-btn {
+            background: #444;
+            border: none;
+            color: #ccc;
+            padding: 8px 12px;
+            margin: 5px 5px 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .new-tab-btn:hover {
+            background: #555;
+            color: #fff;
+        }
+
+        .terminal-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .terminal-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 10px;
+            display: none;
+        }
+
+        .terminal-wrapper.active {
+            display: block;
+        }
+
+        .terminal {
+            width: 100%;
+            height: 100%;
+        }
+
+        .right-pane {
+            width: 0;
+            background: #1a1a1a;
+            border-left: 1px solid #333;
+            transition: width 0.3s ease;
+            overflow: hidden;
+        }
+
+        .right-pane.open {
+            width: 50%;
+        }
+
+        .file-viewer {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .file-header {
+            background: #222;
+            padding: 10px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-path {
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .close-file {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .close-file:hover {
+            color: #fff;
+        }
+
+        .file-content {
+            flex: 1;
+            padding: 20px;
+            overflow: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        .connected {
+            background: #4caf50;
+            color: white;
+        }
+
+        .disconnected {
+            background: #f44336;
+            color: white;
+        }
+
+        .connecting {
+            background: #ff9800;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            margin: 15% auto;
+            padding: 30px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            width: 400px;
+            color: #fff;
+        }
+
+        .modal h3 {
+            margin-bottom: 20px;
+            color: #4a9eff;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ccc;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            background: #0c0c0c;
+            border: 1px solid #333;
+            border-radius: 4px;
+            color: #fff;
+            font-family: inherit;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4a9eff;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .file-link {
+            color: #4a9eff !important;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .file-link:hover {
+            color: #6bb6ff !important;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">Claude Code Web Shell</div>
+        <div class="header-controls">
+            <button class="header-btn" onclick="openPasswordModal()">Change Password</button>
+            <form action="/logout" method="POST" style="display: inline;">
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="connection-status connecting" id="status">Connecting...</div>
+    
+    <div class="main-container">
+        <div class="left-pane">
+            <div class="tabs-container">
+                <div id="tabs"></div>
+                <button class="new-tab-btn" onclick="createNewTab()">+</button>
+            </div>
+            <div class="terminal-container" id="terminal-container"></div>
+        </div>
+        <div class="right-pane" id="right-pane">
+            <div class="file-viewer">
+                <div class="file-header">
+                    <div class="file-path" id="file-path">No file selected</div>
+                    <button class="close-file" onclick="closeFileViewer()">×</button>
+                </div>
+                <div class="file-content" id="file-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <h3>Change Password</h3>
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label for="currentPassword">Current Password:</label>
+                    <input type="password" id="currentPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password:</label>
+                    <input type="password" id="newPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password:</label>
+                    <input type="password" id="confirmPassword" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="header-btn" onclick="closePasswordModal()">Cancel</button>
+                    <button type="submit" class="header-btn">Change Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/xterm@5.3.0/lib/xterm.js"></script>
+    <script src="https://unpkg.com/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+    <script>
+        let terminals = new Map();
+        let activeTerminalId = null;
+        let tabCounter = 1;
+        let ws = null;
+        let sessionId = Math.random().toString(36).substring(7);
+
+        const terminalTheme = {
+            background: '#0c0c0c',
+            foreground: '#ffffff',
+            cursor: '#ffffff',
+            cursorAccent: '#000000',
+            selection: '#ffffff40',
+            black: '#000000',
+            red: '#cd3131',
+            green: '#0dbc79',
+            yellow: '#e5e510',
+            blue: '#2472c8',
+            magenta: '#bc3fbc',
+            cyan: '#11a8cd',
+            white: '#e5e5e5',
+            brightBlack: '#666666',
+            brightRed: '#f14c4c',
+            brightGreen: '#23d18b',
+            brightYellow: '#f5f543',
+            brightBlue: '#3b8eea',
+            brightMagenta: '#d670d6',
+            brightCyan: '#29b8db',
+            brightWhite: '#ffffff'
+        };
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}`, [sessionId]);
+
+            const statusEl = document.getElementById('status');
+
+            ws.onopen = () => {
+                statusEl.textContent = 'Connected';
+                statusEl.className = 'connection-status connected';
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 2000);
+            };
+
+            ws.onclose = () => {
+                statusEl.textContent = 'Disconnected';
+                statusEl.className = 'connection-status disconnected';
+                statusEl.style.display = 'block';
+                
+                for (const terminal of terminals.values()) {
+                    terminal.writeln('\r\n\x1b[31mConnection lost. Refresh page to reconnect.\x1b[0m');
+                }
+            };
+
+            ws.onerror = () => {
+                statusEl.textContent = 'Connection Error';
+                statusEl.className = 'connection-status disconnected';
+                statusEl.style.display = 'block';
+            };
+
+            ws.onmessage = handleWebSocketMessage;
+        }
+
+        function handleWebSocketMessage(event) {
+            const message = JSON.parse(event.data);
+            
+            switch (message.type) {
+                case 'output':
+                    const terminal = terminals.get(message.terminalId);
+                    if (terminal) {
+                        const processedData = processTerminalOutput(message.data);
+                        terminal.write(processedData);
+                    }
+                    break;
+                case 'exit':
+                    const exitTerminal = terminals.get(message.terminalId);
+                    if (exitTerminal) {
+                        exitTerminal.writeln('\r\n\x1b[33mProcess exited.\x1b[0m');
+                    }
+                    break;
+                case 'ready':
+                    if (!activeTerminalId) {
+                        createTab(message.terminalId, true);
+                    }
+                    break;
+                case 'terminal_created':
+                    createTab(message.terminalId, false);
+                    break;
+            }
+        }
+
+        function processTerminalOutput(data) {
+            const filePathRegex = /([a-zA-Z0-9_\-\.\~\/]+\.[a-zA-Z0-9]+(?::\d+(?::\d+)?)?)/g;
+            
+            return data.replace(filePathRegex, (match, filePath) => {
+                const pathParts = filePath.split(':');
+                const actualPath = pathParts[0];
+                
+                if (actualPath.includes('.') && actualPath.length > 3 && !actualPath.startsWith('http') && !actualPath.startsWith('www')) {
+                    const absolutePath = actualPath.startsWith('/') ? actualPath : (actualPath.startsWith('~') ? actualPath.replace('~', process.env.HOME || '/Users') : `${process.cwd()}/${actualPath}`);
+                    return `\x1b]8;;file://${absolutePath}\x1b\\\x1b[38;5;75m${match}\x1b[0m\x1b]8;;\x1b\\`;
+                }
+                return match;
+            });
+        }
+
+        function createTab(terminalId, isInitial = false) {
+            const terminal = new Terminal({
+                theme: terminalTheme,
+                fontFamily: '"Monaco", "Menlo", "Ubuntu Mono", monospace',
+                fontSize: 14,
+                cursorBlink: true,
+                scrollback: 1000,
+                tabStopWidth: 4
+            });
+
+            const fitAddon = new FitAddon.FitAddon();
+            terminal.loadAddon(fitAddon);
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'terminal-wrapper';
+            wrapper.id = `terminal-${terminalId}`;
+            
+            const terminalElement = document.createElement('div');
+            terminalElement.className = 'terminal';
+            wrapper.appendChild(terminalElement);
+            
+            document.getElementById('terminal-container').appendChild(wrapper);
+            terminal.open(terminalElement);
+            fitAddon.fit();
+
+            terminal.onData((data) => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'input', data, targetTerminal: terminalId }));
+                }
+            });
+
+            terminal.onResize(({ cols, rows }) => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'resize', data: { cols, rows }, targetTerminal: terminalId }));
+                }
+            });
+
+            terminals.set(terminalId, terminal);
+
+            const tabsContainer = document.getElementById('tabs');
+            const tab = document.createElement('div');
+            tab.className = 'tab';
+            tab.id = `tab-${terminalId}`;
+            tab.innerHTML = `
+                Terminal ${tabCounter++}
+                <button class="tab-close" onclick="closeTab('${terminalId}')" title="Close tab">×</button>
+            `;
+            tab.addEventListener('click', (e) => {
+                if (e.target.className !== 'tab-close') {
+                    switchToTab(terminalId);
+                }
+            });
+            
+            tabsContainer.appendChild(tab);
+
+            if (isInitial || !activeTerminalId) {
+                switchToTab(terminalId);
+            }
+
+            window.addEventListener('resize', () => fitAddon.fit());
+
+            terminal.element.addEventListener('click', (e) => {
+                if ((e.metaKey || e.ctrlKey) && e.target.tagName === 'A' && e.target.href) {
+                    e.preventDefault();
+                    const href = e.target.href;
+                    if (href.startsWith('file://')) {
+                        const filePath = href.substring(7);
+                        openFileInViewer(filePath);
+                    }
+                }
+            });
+            
+            terminal.element.addEventListener('mouseover', (e) => {
+                if (e.target.tagName === 'A' && e.target.href && e.target.href.startsWith('file://')) {
+                    e.target.style.textDecoration = 'underline';
+                }
+            });
+            
+            terminal.element.addEventListener('mouseout', (e) => {
+                if (e.target.tagName === 'A' && e.target.href && e.target.href.startsWith('file://')) {
+                    e.target.style.textDecoration = 'none';
+                }
+            });
+
+            return terminal;
+        }
+
+        function switchToTab(terminalId) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.terminal-wrapper').forEach(wrapper => wrapper.classList.remove('active'));
+            
+            document.getElementById(`tab-${terminalId}`).classList.add('active');
+            document.getElementById(`terminal-${terminalId}`).classList.add('active');
+            
+            activeTerminalId = terminalId;
+            terminals.get(terminalId).focus();
+        }
+
+        function closeTab(terminalId) {
+            if (terminals.size <= 1) return;
+
+            terminals.get(terminalId).dispose();
+            terminals.delete(terminalId);
+            
+            document.getElementById(`tab-${terminalId}`).remove();
+            document.getElementById(`terminal-${terminalId}`).remove();
+
+            if (activeTerminalId === terminalId) {
+                const remainingTerminalId = terminals.keys().next().value;
+                switchToTab(remainingTerminalId);
+            }
+        }
+
+        function createNewTab() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ 
+                    type: 'create_terminal', 
+                    data: { cols: 80, rows: 24 }
+                }));
+            }
+        }
+
+        function openFileInViewer(filePath) {
+            fetch(`/api/file/${encodeURIComponent(filePath)}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('File not found');
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('file-path').textContent = data.path;
+                    document.getElementById('file-content').textContent = data.content;
+                    document.getElementById('right-pane').classList.add('open');
+                })
+                .catch(error => {
+                    console.error('Error loading file:', error);
+                });
+        }
+
+        function closeFileViewer() {
+            document.getElementById('right-pane').classList.remove('open');
+        }
+
+        function openPasswordModal() {
+            document.getElementById('passwordModal').style.display = 'block';
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').style.display = 'none';
+            document.getElementById('passwordForm').reset();
+        }
+
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                alert('New passwords do not match');
+                return;
+            }
+
+            try {
+                const response = await fetch('/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentPassword, newPassword })
+                });
+
+                if (response.ok) {
+                    alert('Password changed successfully');
+                    closePasswordModal();
+                } else {
+                    const error = await response.json();
+                    alert(error.error || 'Failed to change password');
+                }
+            } catch (error) {
+                alert('Error changing password');
+            }
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (ws) ws.close();
+        });
+
+        connectWebSocket();
+    </script>
+</body>
+</html>
