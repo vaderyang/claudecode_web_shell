@@ -746,7 +746,7 @@
                     }, 200);
                     break;
                 case 'terminal_created':
-                    createTab(message.terminalId, false);
+                    createTab(message.terminalId, true);
                     setTimeout(() => {
                         updateTabCloseButtons();
                     }, 200);

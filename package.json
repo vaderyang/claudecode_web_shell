@@ -13,7 +13,9 @@
     "node-pty": "^1.0.0",
     "bcrypt": "^5.1.1",
     "express-session": "^1.17.3",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

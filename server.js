@@ -7,10 +7,12 @@ const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs').promises;
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ noServer: true });
 
 const PORT = process.env.PORT || 3000;
 const DEFAULT_USERNAME = process.env.USERNAME || 'admin';
@@ -22,15 +24,33 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(session({
+// Basic security headers
+app.use(helmet());
+
+// Trust proxy (safe to set; important behind reverse proxies)
+app.set('trust proxy', 1);
+
+const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'claude-terminal-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { 
-    secure: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
     maxAge: 24 * 60 * 60 * 1000
   }
-}));
+});
+
+app.use(sessionMiddleware);
+
+// Lightweight rate limit for login route
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 const authenticateUser = (req, res, next) => {
   if (req.session.authenticated) {
@@ -50,7 +70,7 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-app.post('/login', async (req, res) => {
+app.post('/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
   
   if (username === DEFAULT_USERNAME && await bcrypt.compare(password, hashedPassword)) {
@@ -80,9 +100,24 @@ app.post('/change-password', authenticateUser, async (req, res) => {
 
 app.get('/api/file/*', authenticateUser, async (req, res) => {
   try {
-    const filePath = req.params[0];
-    const content = await fs.readFile(filePath, 'utf8');
-    res.json({ content, path: filePath });
+    const requested = req.params[0] || '';
+    const base = process.cwd();
+    const resolved = path.resolve(base, requested);
+
+    if (!resolved.startsWith(base + path.sep)) {
+      return res.status(403).json({ error: 'Forbidden path' });
+    }
+
+    const stat = await fs.stat(resolved);
+    if (stat.isDirectory()) {
+      return res.status(400).json({ error: 'Path is a directory' });
+    }
+    if (stat.size > 1_000_000) {
+      return res.status(413).json({ error: 'File too large' });
+    }
+
+    const content = await fs.readFile(resolved, 'utf8');
+    res.json({ content, path: resolved });
   } catch (error) {
     res.status(404).json({ error: 'File not found' });
   }
@@ -91,6 +126,20 @@ app.get('/api/file/*', authenticateUser, async (req, res) => {
 // Provide minimal environment info to the client for safe path resolution
 app.get('/api/info', authenticateUser, (req, res) => {
   res.json({ cwd: process.cwd(), home: process.env.HOME || '' });
+});
+
+// Enforce authenticated sessions on WebSocket upgrade
+server.on('upgrade', (req, socket, head) => {
+  sessionMiddleware(req, {}, () => {
+    if (!req.session || !req.session.authenticated) {
+      socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+      socket.destroy();
+      return;
+    }
+    wss.handleUpgrade(req, socket, head, (ws) => {
+      wss.emit('connection', ws, req);
+    });
+  });
 });
 
 const terminals = new Map();
@@ -209,5 +258,9 @@ wss.on('connection', (ws, req) => {
 
 server.listen(PORT, () => {
   console.log(`Claude Code Web Shell running on http://localhost:${PORT}`);
-  console.log(`Default login: ${DEFAULT_USERNAME} / ${DEFAULT_PASSWORD}`);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`Default login: ${DEFAULT_USERNAME} / ********`);
+  } else {
+    console.log('Default credentials should be provided via USERNAME and PASSWORD environment variables.');
+  }
 });
