@@ -24,8 +24,23 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Basic security headers
-app.use(helmet());
+// Basic security headers - temporarily disabled for debugging
+// app.use(helmet({
+//   contentSecurityPolicy: {
+//     directives: {
+//       defaultSrc: ["'self'"],
+//       scriptSrc: ["'self'", "'unsafe-inline'", "unpkg.com"],
+//       styleSrc: ["'self'", "'unsafe-inline'", "unpkg.com"],
+//       connectSrc: ["'self'", "ws:", "wss:"],
+//       imgSrc: ["'self'", "data:"],
+//       fontSrc: ["'self'"],
+//       // Disable upgrade-insecure-requests for local development
+//       upgradeInsecureRequests: null,
+//     },
+//   },
+//   // Disable HSTS for local development
+//   hsts: false,
+// }));
 
 // Trust proxy (safe to set; important behind reverse proxies)
 app.set('trust proxy', 1);
@@ -258,9 +273,9 @@ wss.on('connection', (ws, req) => {
 
 server.listen(PORT, () => {
   console.log(`Claude Code Web Shell running on http://localhost:${PORT}`);
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`Default login: ${DEFAULT_USERNAME} / ********`);
-  } else {
+  if (process.env.NODE_ENV === 'production') {
     console.log('Default credentials should be provided via USERNAME and PASSWORD environment variables.');
+  } else {
+    console.log(`Default login: ${DEFAULT_USERNAME} / ${DEFAULT_PASSWORD}`);
   }
 });

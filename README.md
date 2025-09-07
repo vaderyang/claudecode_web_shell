@@ -4,7 +4,7 @@ A web-based terminal interface for Claude Code that allows you to interact with 
 
 ## Screenshot
 
-![Claude Code Web Shell Interface](./screenshot-dark-theme.png)
+![Claude Code Web Shell Interface](./dark_theme.jpg)
 
 *Modern dark-themed terminal interface with Apple/Google inspired design*
 

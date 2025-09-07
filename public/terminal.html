@@ -756,13 +756,21 @@
 
         function processTerminalOutput(data) {
             try {
-                const filePathRegex = /([a-zA-Z0-9_\-\.\~\/]+\.[a-zA-Z0-9]+(?::\d+(?::\d+)?)?)/g;
+                // More specific regex that avoids ANSI escape sequences
+                // Look for file paths that:
+                // 1. Start with word boundary or whitespace
+                // 2. Have reasonable file extensions
+                // 3. Don't immediately follow ANSI escape codes
+                const filePathRegex = /(?:^|\s)([a-zA-Z0-9_\-][a-zA-Z0-9_\-\.]*\.[a-zA-Z]{1,5}(?::\d+(?::\d+)?)?)(?=\s|$)/g;
+                
                 return data.replace(filePathRegex, (match, filePath) => {
                     const pathParts = filePath.split(':');
                     let actualPath = pathParts[0];
 
-                    if (!(actualPath.includes('.') && actualPath.length > 3) ||
-                        actualPath.startsWith('http') || actualPath.startsWith('www')) {
+                    // Skip if it looks like part of an ANSI sequence or URL
+                    if (actualPath.includes('m') && pathParts.length === 1 ||
+                        actualPath.startsWith('http') || actualPath.startsWith('www') ||
+                        actualPath.length < 3) {
                         return match;
                     }
 
@@ -773,7 +781,10 @@
                             const base = envInfo.cwd || '';
                             actualPath = `${base.replace(/\/$/, '')}/${actualPath}`;
                         }
-                        return `\x1b]8;;file://${actualPath}\x1b\\\x1b[38;5;75m${match}\x1b[0m\x1b]8;;\x1b\\`;
+                        
+                        // Preserve the whitespace/boundary in the replacement
+                        const prefix = match.substring(0, match.indexOf(filePath));
+                        return `${prefix}\x1b]8;;file://${actualPath}\x1b\\\x1b[38;5;75m${filePath}\x1b[0m\x1b]8;;\x1b\\`;
                     } catch (e) {
                         return match;
                     }
