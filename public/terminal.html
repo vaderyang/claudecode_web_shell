@@ -3,70 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1C1C1E">
     <title>Claude Code Web Shell</title>
     <link rel="stylesheet" href="https://unpkg.com/xterm@5.3.0/css/xterm.css" />
+    <link rel="stylesheet" href="/css/themes.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            background: #0c0c0c;
-            color: #ffffff;
+            font-family: var(--font-sans);
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-primary);
             height: 100vh;
             overflow: hidden;
         }
 
         .header {
-            background: #1a1a1a;
-            border-bottom: 1px solid #333;
-            padding: 10px 20px;
+            background: var(--color-header-bg);
+            border-bottom: 1px solid var(--color-border-primary);
+            padding: var(--space-md) var(--space-lg);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-sm);
         }
 
         .title {
-            color: #4a9eff;
-            font-size: 18px;
-            font-weight: bold;
+            /* Use brand styling from themes.css */
         }
 
         .header-controls {
             display: flex;
-            gap: 10px;
+            gap: var(--space-md);
             align-items: center;
         }
 
         .header-btn {
-            background: #444;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
+            background: var(--color-surface-secondary);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border-primary);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-md);
             cursor: pointer;
-            font-family: inherit;
-            font-size: 12px;
+            font-family: var(--font-sans);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+            transition: all var(--transition-base) var(--transition-curve);
         }
 
         .header-btn:hover {
-            background: #555;
+            background: var(--color-surface-hover);
+            border-color: var(--color-border-secondary);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
         }
 
         .logout-btn {
-            background: #ff4444;
+            background: var(--color-error);
+            color: white;
+            border-color: var(--color-error);
         }
 
         .logout-btn:hover {
-            background: #cc3333;
+            background: #CC2936;
+            border-color: #CC2936;
         }
 
         .main-container {
             height: calc(100vh - 60px);
             display: flex;
+            min-height: 400px;
+            background: var(--color-bg-primary);
         }
 
         .left-pane {
@@ -76,14 +83,16 @@
         }
 
         .tabs-container {
-            background: #1a1a1a;
-            border-bottom: 1px solid #333;
+            background: var(--color-sidebar-bg);
+            border-bottom: 1px solid var(--color-border-primary);
             display: flex;
             align-items: center;
-            padding: 0 10px;
+            padding: 0 var(--space-md);
             overflow-x: auto;
             overflow-y: hidden;
             white-space: nowrap;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         #tabs {
@@ -93,65 +102,77 @@
         }
 
         .tab {
-            background: #333;
-            border: none;
-            color: #ccc;
-            padding: 8px 16px;
-            margin: 5px 2px;
-            border-radius: 4px 4px 0 0;
+            background: var(--color-surface-secondary);
+            border: 1px solid var(--color-border-primary);
+            color: var(--color-text-secondary);
+            padding: var(--space-sm) var(--space-md);
+            margin: var(--space-xs);
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
             cursor: pointer;
-            font-family: inherit;
-            font-size: 12px;
+            font-family: var(--font-sans);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: var(--space-sm);
             flex-shrink: 0;
             white-space: nowrap;
+            transition: all var(--transition-base) var(--transition-curve);
         }
 
         .tab.active {
-            background: #0c0c0c;
-            color: #fff;
+            background: var(--color-terminal-bg);
+            color: var(--color-text-primary);
+            border-bottom-color: var(--color-terminal-bg);
+            box-shadow: var(--shadow-sm);
         }
 
         .tab:hover:not(.active) {
-            background: #444;
+            background: var(--color-surface-hover);
+            border-color: var(--color-border-secondary);
         }
 
         .tab-close {
             background: none;
             border: none;
-            color: #888;
+            color: var(--color-text-tertiary);
             cursor: pointer;
-            padding: 2px;
-            border-radius: 2px;
-            font-size: 10px;
+            padding: var(--space-xs);
+            border-radius: var(--radius-sm);
+            font-size: var(--text-xs);
+            transition: all var(--transition-fast) var(--transition-curve);
         }
 
         .tab-close:hover {
-            background: #555;
-            color: #fff;
+            background: var(--color-surface-hover);
+            color: var(--color-text-primary);
         }
 
         .new-tab-btn {
-            background: #444;
-            border: none;
-            color: #ccc;
-            padding: 8px 12px;
-            margin: 5px 5px 5px 10px;
-            border-radius: 4px;
+            background: var(--color-surface-secondary);
+            border: 1px solid var(--color-border-primary);
+            color: var(--color-text-secondary);
+            padding: var(--space-sm) var(--space-md);
+            margin: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-md);
+            border-radius: var(--radius-md);
             cursor: pointer;
-            font-size: 14px;
+            font-size: var(--text-base);
+            font-weight: var(--font-medium);
+            transition: all var(--transition-base) var(--transition-curve);
         }
 
         .new-tab-btn:hover {
-            background: #555;
-            color: #fff;
+            background: var(--color-surface-hover);
+            color: var(--color-text-primary);
+            border-color: var(--color-border-secondary);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
         }
 
         .terminal-container {
             flex: 1;
             position: relative;
+            background: var(--color-terminal-bg);
         }
 
         .terminal-wrapper {
@@ -160,7 +181,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            padding: 10px;
+            padding: var(--space-md);
             display: none;
         }
 
@@ -171,18 +192,160 @@
         .terminal {
             width: 100%;
             height: 100%;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: inset 0 0 0 1px var(--color-border-primary);
         }
 
         .right-pane {
             width: 0;
-            background: #1a1a1a;
-            border-left: 1px solid #333;
-            transition: width 0.3s ease;
+            background: var(--color-sidebar-bg);
+            border-left: 1px solid var(--color-border-primary);
+            transition: width var(--transition-slow) var(--transition-curve);
             overflow: hidden;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .right-pane.open {
             width: 50%;
+            min-width: 300px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Enhanced responsive design */
+        @media (max-width: 1024px) {
+            .right-pane.open {
+                width: 60%;
+            }
+            
+            .header {
+                padding: var(--space-sm) var(--space-md);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-wrap: wrap;
+                gap: var(--space-sm);
+                padding: var(--space-sm) var(--space-md);
+            }
+            
+            .right-pane.open {
+                width: 100%;
+                position: absolute;
+                top: 0;
+                right: 0;
+                z-index: var(--z-overlay);
+                height: 100%;
+            }
+            
+            .tabs-container {
+                padding: 0 var(--space-sm);
+                overflow-x: scroll;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .terminal-wrapper {
+                padding: var(--space-sm);
+            }
+            
+            .connection-status {
+                top: 65px;
+                right: var(--space-md);
+                font-size: var(--text-xs);
+                padding: var(--space-xs) var(--space-sm);
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+                padding: var(--space-sm);
+            }
+            
+            .header-controls {
+                justify-content: center;
+                margin-top: var(--space-sm);
+            }
+            
+            .main-container {
+                height: calc(100vh - 80px);
+            }
+            
+            .tab {
+                font-size: var(--text-sm);
+                padding: var(--space-xs) var(--space-sm);
+            }
+            
+            .new-tab-btn {
+                font-size: var(--text-sm);
+                padding: var(--space-xs) var(--space-sm);
+            }
+            
+            /* Improve modal on mobile */
+            .modal-content {
+                width: 95vw;
+                margin: 10% auto;
+                padding: var(--space-xl);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .title {
+                font-size: var(--text-lg);
+            }
+            
+            .header-btn {
+                font-size: var(--text-xs);
+                padding: var(--space-xs) var(--space-sm);
+            }
+            
+            .tab-close {
+                display: none;
+            }
+            
+            .connection-status {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin: var(--space-xs) 0;
+            }
+        }
+        
+        /* Landscape orientation optimizations */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .header {
+                flex-direction: row;
+                height: 50px;
+                padding: var(--space-xs) var(--space-md);
+            }
+            
+            .header-controls {
+                margin-top: 0;
+            }
+            
+            .main-container {
+                height: calc(100vh - 50px);
+            }
+        }
+        
+        /* Touch-friendly improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .header-btn,
+            .tab,
+            .new-tab-btn,
+            .tab-close {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .theme-toggle {
+                min-height: 44px;
+                min-width: 52px;
+            }
         }
 
         .file-viewer {
@@ -192,39 +355,49 @@
         }
 
         .file-header {
-            background: #222;
-            padding: 10px;
-            border-bottom: 1px solid #333;
+            background: var(--color-surface-secondary);
+            padding: var(--space-md);
+            border-bottom: 1px solid var(--color-border-primary);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .file-path {
-            font-size: 12px;
-            color: #ccc;
+            font-size: var(--text-sm);
+            color: var(--color-text-secondary);
+            font-family: var(--font-mono);
+            font-weight: var(--font-medium);
         }
 
         .close-file {
             background: none;
             border: none;
-            color: #888;
+            color: var(--color-text-tertiary);
             cursor: pointer;
-            font-size: 16px;
+            font-size: var(--text-lg);
+            padding: var(--space-xs);
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-fast) var(--transition-curve);
         }
 
         .close-file:hover {
-            color: #fff;
+            background: var(--color-surface-hover);
+            color: var(--color-text-primary);
         }
 
         .file-content {
             flex: 1;
-            padding: 20px;
+            padding: var(--space-lg);
             overflow: auto;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 13px;
-            line-height: 1.5;
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            line-height: 1.6;
             white-space: pre-wrap;
+            color: var(--color-text-primary);
+            background: var(--color-surface-primary);
         }
 
         .connection-status {
@@ -255,80 +428,144 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 2000;
+            z-index: var(--z-modal);
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: var(--color-bg-overlay);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
         }
 
         .modal-content {
-            background: #1a1a1a;
+            background: var(--color-surface-elevated);
             margin: 15% auto;
-            padding: 30px;
-            border: 1px solid #333;
-            border-radius: 8px;
+            padding: var(--space-2xl);
+            border: 1px solid var(--color-border-primary);
+            border-radius: var(--radius-xl);
             width: 400px;
-            color: #fff;
+            max-width: 90vw;
+            color: var(--color-text-primary);
+            box-shadow: var(--shadow-xl);
+            animation: modalSlideIn 0.3s var(--transition-curve);
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         .modal h3 {
-            margin-bottom: 20px;
-            color: #4a9eff;
+            margin-bottom: var(--space-lg);
+            color: var(--color-primary);
+            font-size: var(--text-xl);
+            font-weight: var(--font-bold);
         }
 
-        .form-group {
-            margin-bottom: 15px;
+        .modal .form-group {
+            margin-bottom: var(--space-lg);
         }
 
-        .form-group label {
+        .modal .form-group label {
             display: block;
-            margin-bottom: 5px;
-            color: #ccc;
+            margin-bottom: var(--space-sm);
+            color: var(--color-text-secondary);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
         }
 
-        .form-group input {
+        .modal .form-group input {
             width: 100%;
-            padding: 8px;
-            background: #0c0c0c;
-            border: 1px solid #333;
-            border-radius: 4px;
-            color: #fff;
-            font-family: inherit;
+            padding: var(--space-md);
+            background: var(--color-surface-primary);
+            border: 2px solid var(--color-border-primary);
+            border-radius: var(--radius-md);
+            color: var(--color-text-primary);
+            font-family: var(--font-sans);
+            font-size: var(--text-base);
+            transition: all var(--transition-base) var(--transition-curve);
         }
 
-        .form-group input:focus {
+        .modal .form-group input:focus {
             outline: none;
-            border-color: #4a9eff;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px var(--color-primary-light);
         }
 
         .modal-buttons {
             display: flex;
-            gap: 10px;
+            gap: var(--space-md);
             justify-content: flex-end;
-            margin-top: 20px;
+            margin-top: var(--space-xl);
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 70px;
+            right: var(--space-lg);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+            z-index: var(--z-dropdown);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-base) var(--transition-curve);
+        }
+
+        .connected {
+            background: var(--color-success);
+            color: white;
+            border: 1px solid var(--color-success);
+        }
+
+        .disconnected {
+            background: var(--color-error);
+            color: white;
+            border: 1px solid var(--color-error);
+        }
+
+        .connecting {
+            background: var(--color-warning);
+            color: white;
+            border: 1px solid var(--color-warning);
         }
 
         .file-link {
-            color: #4a9eff !important;
+            color: var(--color-primary) !important;
             cursor: pointer;
             text-decoration: none;
+            transition: color var(--transition-base) var(--transition-curve);
         }
 
         .file-link:hover {
-            color: #6bb6ff !important;
+            color: var(--color-primary-hover) !important;
             text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="title">Claude Code Web Shell</div>
+        <div class="brand-title">Claude Code Web Shell</div>
         <div class="header-controls">
+            <div class="theme-toggle" title="Toggle theme">
+                <input type="checkbox" class="theme-toggle-input" id="theme-toggle" aria-label="Toggle theme">
+                <label for="theme-toggle" class="theme-toggle-slider">
+                    <span class="theme-toggle-icon sun">☀</span>
+                    <span class="theme-toggle-icon moon">🌙</span>
+                </label>
+            </div>
             <button class="header-btn" onclick="openPasswordModal()">Change Password</button>
             <form action="/logout" method="POST" style="display: inline;">
-                <button type="submit" class="logout-btn">Logout</button>
+                <button type="submit" class="header-btn logout-btn">Logout</button>
             </form>
         </div>
     </div>
@@ -380,36 +617,58 @@
 
     <script src="https://unpkg.com/xterm@5.3.0/lib/xterm.js"></script>
     <script src="https://unpkg.com/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+    <script src="/js/theme-manager.js"></script>
     <script>
         let terminals = new Map();
         let activeTerminalId = null;
         let tabCounter = 1;
         let ws = null;
         let sessionId = Math.random().toString(36).substring(7);
+        let envInfo = { cwd: '/', home: '' };
+        let containerResizeObserver = null;
+        let roTimeout;
+        let resizeInProgress = false;
 
-        const terminalTheme = {
-            background: '#0c0c0c',
-            foreground: '#ffffff',
-            cursor: '#ffffff',
-            cursorAccent: '#000000',
-            selection: '#ffffff40',
-            black: '#000000',
-            red: '#cd3131',
-            green: '#0dbc79',
-            yellow: '#e5e510',
-            blue: '#2472c8',
-            magenta: '#bc3fbc',
-            cyan: '#11a8cd',
-            white: '#e5e5e5',
-            brightBlack: '#666666',
-            brightRed: '#f14c4c',
-            brightGreen: '#23d18b',
-            brightYellow: '#f5f543',
-            brightBlue: '#3b8eea',
-            brightMagenta: '#d670d6',
-            brightCyan: '#29b8db',
-            brightWhite: '#ffffff'
-        };
+        async function initEnvInfo() {
+            try {
+                const res = await fetch('/api/info');
+                if (res.ok) {
+                    envInfo = await res.json();
+                }
+            } catch (e) {
+                console.warn('Failed to load env info', e);
+            }
+        }
+
+        // Get current theme and create terminal theme dynamically
+        function getTerminalTheme() {
+            const isDark = document.documentElement.classList.contains('dark-theme');
+            const computedStyle = getComputedStyle(document.documentElement);
+            
+            return {
+                background: computedStyle.getPropertyValue('--terminal-background').trim(),
+                foreground: computedStyle.getPropertyValue('--terminal-foreground').trim(),
+                cursor: computedStyle.getPropertyValue('--terminal-cursor').trim(),
+                cursorAccent: isDark ? '#000000' : '#ffffff',
+                selection: computedStyle.getPropertyValue('--terminal-selection').trim(),
+                black: computedStyle.getPropertyValue('--terminal-black').trim(),
+                red: computedStyle.getPropertyValue('--terminal-red').trim(),
+                green: computedStyle.getPropertyValue('--terminal-green').trim(),
+                yellow: computedStyle.getPropertyValue('--terminal-yellow').trim(),
+                blue: computedStyle.getPropertyValue('--terminal-blue').trim(),
+                magenta: computedStyle.getPropertyValue('--terminal-magenta').trim(),
+                cyan: computedStyle.getPropertyValue('--terminal-cyan').trim(),
+                white: computedStyle.getPropertyValue('--terminal-white').trim(),
+                brightBlack: computedStyle.getPropertyValue('--terminal-bright-black').trim(),
+                brightRed: computedStyle.getPropertyValue('--terminal-bright-red').trim(),
+                brightGreen: computedStyle.getPropertyValue('--terminal-bright-green').trim(),
+                brightYellow: computedStyle.getPropertyValue('--terminal-bright-yellow').trim(),
+                brightBlue: computedStyle.getPropertyValue('--terminal-bright-blue').trim(),
+                brightMagenta: computedStyle.getPropertyValue('--terminal-bright-magenta').trim(),
+                brightCyan: computedStyle.getPropertyValue('--terminal-bright-cyan').trim(),
+                brightWhite: computedStyle.getPropertyValue('--terminal-bright-white').trim()
+            };
+        }
 
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -425,13 +684,26 @@
                 }, 2000);
             };
 
-            ws.onclose = () => {
+            ws.onclose = (event) => {
                 statusEl.textContent = 'Disconnected';
                 statusEl.className = 'connection-status disconnected';
                 statusEl.style.display = 'block';
                 
-                for (const terminal of terminals.values()) {
-                    terminal.writeln('\r\n\x1b[31mConnection lost. Refresh page to reconnect.\x1b[0m');
+                for (const { terminal } of terminals.values()) {
+                    try {
+                        terminal.writeln('\r\n\x1b[31mConnection lost. Refresh page to reconnect.\x1b[0m');
+                    } catch (e) {
+                        console.warn('Failed to write disconnection message:', e);
+                    }
+                }
+                
+                // Attempt to reconnect after a delay unless it was a deliberate close
+                if (!event.wasClean) {
+                    setTimeout(() => {
+                        if (ws && ws.readyState === WebSocket.CLOSED) {
+                            connectWebSocket();
+                        }
+                    }, 3000);
                 }
             };
 
@@ -449,52 +721,79 @@
             
             switch (message.type) {
                 case 'output':
-                    const terminal = terminals.get(message.terminalId);
-                    if (terminal) {
-                        const processedData = processTerminalOutput(message.data);
-                        terminal.write(processedData);
+                    const terminalData = terminals.get(message.terminalId);
+                    if (terminalData && terminalData.terminal) {
+                        try {
+                            const processedData = processTerminalOutput(message.data);
+                            terminalData.terminal.write(processedData);
+                        } catch (e) {
+                            console.warn('Error writing to terminal:', e);
+                        }
                     }
                     break;
                 case 'exit':
-                    const exitTerminal = terminals.get(message.terminalId);
-                    if (exitTerminal) {
-                        exitTerminal.writeln('\r\n\x1b[33mProcess exited.\x1b[0m');
+                    const exitTerminalData = terminals.get(message.terminalId);
+                    if (exitTerminalData) {
+                        exitTerminalData.terminal.writeln('\r\n\x1b[33mProcess exited.\x1b[0m');
                     }
                     break;
                 case 'ready':
                     if (!activeTerminalId) {
                         createTab(message.terminalId, true);
                     }
+                    setTimeout(() => {
+                        updateTabCloseButtons();
+                    }, 200);
                     break;
                 case 'terminal_created':
                     createTab(message.terminalId, false);
+                    setTimeout(() => {
+                        updateTabCloseButtons();
+                    }, 200);
                     break;
             }
         }
 
         function processTerminalOutput(data) {
-            const filePathRegex = /([a-zA-Z0-9_\-\.\~\/]+\.[a-zA-Z0-9]+(?::\d+(?::\d+)?)?)/g;
-            
-            return data.replace(filePathRegex, (match, filePath) => {
-                const pathParts = filePath.split(':');
-                const actualPath = pathParts[0];
-                
-                if (actualPath.includes('.') && actualPath.length > 3 && !actualPath.startsWith('http') && !actualPath.startsWith('www')) {
-                    const absolutePath = actualPath.startsWith('/') ? actualPath : (actualPath.startsWith('~') ? actualPath.replace('~', process.env.HOME || '/Users') : `${process.cwd()}/${actualPath}`);
-                    return `\x1b]8;;file://${absolutePath}\x1b\\\x1b[38;5;75m${match}\x1b[0m\x1b]8;;\x1b\\`;
-                }
-                return match;
-            });
+            try {
+                const filePathRegex = /([a-zA-Z0-9_\-\.\~\/]+\.[a-zA-Z0-9]+(?::\d+(?::\d+)?)?)/g;
+                return data.replace(filePathRegex, (match, filePath) => {
+                    const pathParts = filePath.split(':');
+                    let actualPath = pathParts[0];
+
+                    if (!(actualPath.includes('.') && actualPath.length > 3) ||
+                        actualPath.startsWith('http') || actualPath.startsWith('www')) {
+                        return match;
+                    }
+
+                    try {
+                        if (actualPath.startsWith('~') && envInfo.home) {
+                            actualPath = actualPath.replace(/^~/, envInfo.home);
+                        } else if (!actualPath.startsWith('/')) {
+                            const base = envInfo.cwd || '';
+                            actualPath = `${base.replace(/\/$/, '')}/${actualPath}`;
+                        }
+                        return `\x1b]8;;file://${actualPath}\x1b\\\x1b[38;5;75m${match}\x1b[0m\x1b]8;;\x1b\\`;
+                    } catch (e) {
+                        return match;
+                    }
+                });
+            } catch (e) {
+                console.warn('processTerminalOutput failed, passing through', e);
+                return data;
+            }
         }
 
         function createTab(terminalId, isInitial = false) {
             const terminal = new Terminal({
-                theme: terminalTheme,
-                fontFamily: '"Monaco", "Menlo", "Ubuntu Mono", monospace',
+                theme: getTerminalTheme(),
+                fontFamily: getComputedStyle(document.documentElement).getPropertyValue('--font-mono').trim().replace(/["']/g, ''),
                 fontSize: 14,
                 cursorBlink: true,
                 scrollback: 1000,
-                tabStopWidth: 4
+                tabStopWidth: 4,
+                cols: 120,
+                rows: 30
             });
 
             const fitAddon = new FitAddon.FitAddon();
@@ -511,6 +810,8 @@
             document.getElementById('terminal-container').appendChild(wrapper);
             terminal.open(terminalElement);
             fitAddon.fit();
+            // Ensure initial PTY size is sent even if onResize wasn't registered yet
+            sendResize(terminalId);
 
             terminal.onData((data) => {
                 if (ws && ws.readyState === WebSocket.OPEN) {
@@ -524,7 +825,6 @@
                 }
             });
 
-            terminals.set(terminalId, terminal);
 
             const tabsContainer = document.getElementById('tabs');
             const tab = document.createElement('div');
@@ -542,11 +842,15 @@
             
             tabsContainer.appendChild(tab);
 
+            terminals.set(terminalId, { terminal, fitAddon });
+
             if (isInitial || !activeTerminalId) {
                 switchToTab(terminalId);
             }
-
-            window.addEventListener('resize', () => fitAddon.fit());
+            
+            setTimeout(() => {
+                updateTabCloseButtons();
+            }, 100);
 
             terminal.element.addEventListener('click', (e) => {
                 if ((e.metaKey || e.ctrlKey) && e.target.tagName === 'A' && e.target.href) {
@@ -575,6 +879,8 @@
         }
 
         function switchToTab(terminalId) {
+            if (activeTerminalId === terminalId) return;
+            
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.terminal-wrapper').forEach(wrapper => wrapper.classList.remove('active'));
             
@@ -582,30 +888,117 @@
             document.getElementById(`terminal-${terminalId}`).classList.add('active');
             
             activeTerminalId = terminalId;
-            terminals.get(terminalId).focus();
+            const { terminal, fitAddon } = terminals.get(terminalId);
+            
+            setTimeout(() => {
+                try {
+                    fitAddon.fit();
+                    terminal.focus();
+                    sendResize(terminalId);
+                } catch (e) {
+                    console.warn('Terminal focus/fit failed:', e);
+                }
+            }, 50);
         }
 
         function closeTab(terminalId) {
-            if (terminals.size <= 1) return;
+            const terminalCount = terminals.size;
+            
+            if (terminalCount <= 1) {
+                console.warn('Cannot close the last terminal');
+                return;
+            }
 
-            terminals.get(terminalId).dispose();
+            const terminalData = terminals.get(terminalId);
+            if (terminalData) {
+                try {
+                    terminalData.terminal.dispose();
+                } catch (e) {
+                    console.warn('Error disposing terminal:', e);
+                }
+            }
+            
             terminals.delete(terminalId);
             
-            document.getElementById(`tab-${terminalId}`).remove();
-            document.getElementById(`terminal-${terminalId}`).remove();
+            const tabElement = document.getElementById(`tab-${terminalId}`);
+            const terminalElement = document.getElementById(`terminal-${terminalId}`);
+            
+            if (tabElement) tabElement.remove();
+            if (terminalElement) terminalElement.remove();
 
             if (activeTerminalId === terminalId) {
-                const remainingTerminalId = terminals.keys().next().value;
-                switchToTab(remainingTerminalId);
+                const remainingTerminalIds = Array.from(terminals.keys());
+                if (remainingTerminalIds.length > 0) {
+                    switchToTab(remainingTerminalIds[0]);
+                }
             }
+            
+            setTimeout(() => {
+                updateTabCloseButtons();
+            }, 100);
         }
 
         function createNewTab() {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ 
                     type: 'create_terminal', 
-                    data: { cols: 80, rows: 24 }
+                    data: { cols: 120, rows: 30 }
                 }));
+                
+                setTimeout(updateTabCloseButtons, 100);
+            }
+        }
+        
+        function updateTabCloseButtons() {
+            const tabCount = terminals.size;
+            document.querySelectorAll('.tab-close').forEach(button => {
+                button.style.display = tabCount <= 1 ? 'none' : 'inline-block';
+            });
+        }
+        
+        function fitActiveTerminal() {
+            if (activeTerminalId && terminals.has(activeTerminalId)) {
+                const { fitAddon } = terminals.get(activeTerminalId);
+                const wrapper = document.getElementById(`terminal-${activeTerminalId}`);
+                if (wrapper && wrapper.classList.contains('active')) {
+                    try {
+                        fitAddon.fit();
+                    } catch (e) {
+                        console.warn('Terminal fit failed:', e);
+                    }
+                }
+            }
+        }
+
+        function sendResize(terminalId) {
+            if (!terminalId || !terminals.has(terminalId) || resizeInProgress) return;
+            const { terminal } = terminals.get(terminalId);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                resizeInProgress = true;
+                ws.send(JSON.stringify({ type: 'resize', data: { cols: terminal.cols, rows: terminal.rows }, targetTerminal: terminalId }));
+                setTimeout(() => { resizeInProgress = false; }, 100);
+            }
+        }
+
+        function attachContainerResizeObserver() {
+            try {
+                const container = document.getElementById('terminal-container');
+                if (!container) return;
+                if (containerResizeObserver) containerResizeObserver.disconnect();
+                containerResizeObserver = new ResizeObserver((entries) => {
+                    clearTimeout(roTimeout);
+                    roTimeout = setTimeout(() => {
+                        try {
+                            fitActiveTerminal();
+                            if (activeTerminalId) sendResize(activeTerminalId);
+                        } catch (e) {
+                            console.warn('ResizeObserver callback failed:', e);
+                        }
+                    }, 50);
+                });
+                containerResizeObserver.observe(container);
+            } catch (e) {
+                console.warn('ResizeObserver setup failed:', e);
             }
         }
 
@@ -670,10 +1063,55 @@
         });
 
         window.addEventListener('beforeunload', () => {
-            if (ws) ws.close();
+            if (containerResizeObserver) {
+                containerResizeObserver.disconnect();
+            }
+            if (ws) {
+                ws.close(1000, 'Page unloading');
+            }
+        });
+        
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                fitActiveTerminal();
+                if (activeTerminalId) sendResize(activeTerminalId);
+            }, 200);
         });
 
-        connectWebSocket();
+        // Refit terminal when the right pane changes width (open/close)
+        const rightPane = document.getElementById('right-pane');
+        if (rightPane) {
+            rightPane.addEventListener('transitionend', (e) => {
+                if (e.propertyName === 'width') {
+                    fitActiveTerminal();
+                    if (activeTerminalId) sendResize(activeTerminalId);
+                }
+            });
+        }
+
+        // Theme change handler to update all terminals
+        document.addEventListener('themechange', (e) => {
+            const newTheme = getTerminalTheme();
+            terminals.forEach(({ terminal }) => {
+                if (terminal && terminal.options) {
+                    terminal.options.theme = newTheme;
+                    // Force terminal to refresh with new theme
+                    if (terminal.element) {
+                        terminal.refresh(0, terminal.rows - 1);
+                    }
+                }
+            });
+        });
+
+        // Initialize environment info and observe container size changes
+        initEnvInfo();
+        attachContainerResizeObserver();
+
+        setTimeout(() => {
+            connectWebSocket();
+        }, 100);
     </script>
 </body>
 </html>

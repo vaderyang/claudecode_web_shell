@@ -3,136 +3,413 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1C1C1E">
     <title>Claude Code Web Shell - Login</title>
+    <link rel="stylesheet" href="/css/themes.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            background: #0c0c0c;
-            color: #ffffff;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            padding: var(--space-md);
+            background: linear-gradient(135deg, 
+                var(--color-bg-primary) 0%, 
+                var(--color-bg-secondary) 100%);
+        }
+        
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--color-header-bg);
+            border-bottom: 1px solid var(--color-border-primary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--space-lg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: var(--z-dropdown);
+        }
+        
+        .header-title {
+            font-size: var(--text-lg);
+            font-weight: var(--font-semibold);
+            color: var(--color-primary);
+        }
+        
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
         }
 
         .login-container {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 40px;
-            width: 400px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+            margin-top: 60px;
+            animation: slideUp 0.6s var(--transition-curve);
+        }
+        
+        .login-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: var(--glass-backdrop);
+            -webkit-backdrop-filter: var(--glass-backdrop);
+            border-radius: var(--radius-xl);
+            padding: var(--space-2xl);
+            box-shadow: var(--shadow-xl);
         }
 
-        h1 {
+        .login-header {
             text-align: center;
-            margin-bottom: 30px;
-            color: #4a9eff;
-            font-size: 24px;
+            margin-bottom: var(--space-2xl);
+        }
+        
+        .login-title {
+            font-size: var(--text-2xl);
+            font-weight: var(--font-bold);
+            color: var(--color-text-primary);
+            margin-bottom: var(--space-sm);
+        }
+        
+        .login-subtitle {
+            font-size: var(--text-base);
+            color: var(--color-text-secondary);
+            font-weight: var(--font-normal);
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: var(--space-lg);
         }
 
-        label {
+        .form-label {
             display: block;
-            margin-bottom: 8px;
-            color: #ccc;
+            margin-bottom: var(--space-sm);
+            color: var(--color-text-secondary);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
         }
 
-        input[type="text"],
-        input[type="password"] {
+        .form-input {
             width: 100%;
-            padding: 12px;
-            background: #0c0c0c;
-            border: 1px solid #333;
-            border-radius: 4px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 14px;
+            padding: var(--space-md);
+            background-color: var(--color-surface-primary);
+            border: 2px solid var(--color-border-primary);
+            border-radius: var(--radius-lg);
+            font-family: var(--font-sans);
+            font-size: var(--text-base);
+            color: var(--color-text-primary);
+            transition: all var(--transition-base) var(--transition-curve);
         }
 
-        input[type="text"]:focus,
-        input[type="password"]:focus {
+        .form-input:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 4px var(--color-primary-light);
             outline: none;
-            border-color: #4a9eff;
+        }
+        
+        .form-input::placeholder {
+            color: var(--color-text-tertiary);
         }
 
-        .login-btn {
+        .login-button {
             width: 100%;
-            padding: 12px;
-            background: #4a9eff;
+            padding: var(--space-md) var(--space-lg);
+            background: linear-gradient(135deg, 
+                var(--color-primary) 0%, 
+                var(--color-primary-hover) 100%);
             border: none;
-            border-radius: 4px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 16px;
+            border-radius: var(--radius-lg);
+            color: var(--color-text-inverted);
+            font-family: var(--font-sans);
+            font-size: var(--text-base);
+            font-weight: var(--font-semibold);
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all var(--transition-base) var(--transition-curve);
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
         }
 
-        .login-btn:hover {
-            background: #357abd;
+        .login-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.2), 
+                transparent);
+            transition: left 0.5s;
         }
 
-        .error {
-            color: #ff4444;
+        .login-button:hover::before {
+            left: 100%;
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .login-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, 
+                var(--color-error) 0%, 
+                #FF6B6B 100%);
+            color: white;
+            padding: var(--space-md);
+            border-radius: var(--radius-md);
             text-align: center;
-            margin-top: 10px;
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+            margin-top: var(--space-md);
             display: none;
+            animation: fadeIn 0.3s var(--transition-curve);
         }
 
-        .info {
+        .login-info {
             text-align: center;
-            margin-top: 20px;
-            font-size: 12px;
-            color: #888;
+            margin-top: var(--space-xl);
+            padding-top: var(--space-lg);
+            border-top: 1px solid var(--color-border-secondary);
+            font-size: var(--text-sm);
+            color: var(--color-text-tertiary);
+        }
+        
+        /* Keyboard shortcut styles removed per user request */
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        /* Loading state */
+        .login-button.loading {
+            pointer-events: none;
+        }
+        
+        .login-button.loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            margin: auto;
+            border: 2px solid transparent;
+            border-top-color: var(--color-text-inverted);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 640px) {
+            .header {
+                padding: 0 var(--space-md);
+            }
+            
+            .login-container {
+                margin-top: 80px;
+            }
+            
+            .login-card {
+                padding: var(--space-xl);
+                margin: var(--space-md);
+            }
+            
+            .header-title {
+                font-size: var(--text-base);
+            }
         }
     </style>
 </head>
 <body>
+    <div class="header">
+        <div class="brand-title">Claude Code Web Shell</div>
+        <div class="header-controls">
+            <div class="theme-toggle" title="Toggle theme">
+                <input type="checkbox" class="theme-toggle-input" id="theme-toggle" aria-label="Toggle theme">
+                <label for="theme-toggle" class="theme-toggle-slider">
+                    <span class="theme-toggle-icon sun">☀</span>
+                    <span class="theme-toggle-icon moon">🌙</span>
+                </label>
+            </div>
+        </div>
+    </div>
+    
     <div class="login-container">
-        <h1>Claude Code Web Shell</h1>
-        <form id="loginForm" method="POST" action="/login">
-            <div class="form-group">
-                <label for="username">Username:</label>
-                <input type="text" id="username" name="username" required>
+        <div class="login-card">
+            <div class="login-header">
+                <h1 class="login-title">Welcome Back</h1>
+                <p class="login-subtitle">Sign in to access your terminal</p>
             </div>
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
+            
+            <form id="loginForm" method="POST" action="/login">
+                <div class="form-group">
+                    <label for="username" class="form-label">Username</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        class="form-input" 
+                        placeholder="Enter your username"
+                        required 
+                        autocomplete="username"
+                        autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        class="form-input" 
+                        placeholder="Enter your password"
+                        required 
+                        autocomplete="current-password">
+                </div>
+                <button type="submit" class="login-button" id="loginButton">
+                    <span class="button-text">Sign In</span>
+                </button>
+                <div class="error-message" id="error"></div>
+            </form>
+            
+            <div class="login-info">
+                <p>Enter your credentials to access the Claude Code terminal</p>
             </div>
-            <button type="submit" class="login-btn">Login</button>
-            <div class="error" id="error"></div>
-        </form>
-        <div class="info">
-            Enter your credentials to access the Claude Code terminal
         </div>
     </div>
 
+    <script src="/js/theme-manager.js"></script>
     <script>
+        // Enhanced login form handling with loading states and better UX
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const formData = new FormData(e.target);
-            const response = await fetch('/login', {
-                method: 'POST',
-                body: new URLSearchParams(formData)
-            });
-
-            if (response.redirected) {
-                window.location.href = response.url;
-            } else {
-                document.getElementById('error').style.display = 'block';
-                document.getElementById('error').textContent = 'Invalid credentials';
+            const form = e.target;
+            const button = document.getElementById('loginButton');
+            const error = document.getElementById('error');
+            const buttonText = button.querySelector('.button-text');
+            
+            // Clear previous errors
+            error.style.display = 'none';
+            error.textContent = '';
+            
+            // Show loading state
+            button.classList.add('loading');
+            button.disabled = true;
+            buttonText.textContent = 'Signing in...';
+            
+            try {
+                const formData = new FormData(form);
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    body: new URLSearchParams(formData)
+                });
+                
+                if (response.redirected) {
+                    buttonText.textContent = 'Success! Redirecting...';
+                    
+                    // Add a brief delay for visual feedback
+                    setTimeout(() => {
+                        window.location.href = response.url;
+                    }, 500);
+                } else {
+                    // Handle error
+                    const errorText = response.status === 401 ? 'Invalid username or password' : 'Login failed. Please try again.';
+                    
+                    error.textContent = errorText;
+                    error.style.display = 'block';
+                    
+                    // Reset form state
+                    button.classList.remove('loading');
+                    button.disabled = false;
+                    buttonText.textContent = 'Sign In';
+                    
+                    // Focus on password field for retry
+                    document.getElementById('password').focus();
+                    document.getElementById('password').select();
+                }
+            } catch (err) {
+                console.error('Login error:', err);
+                
+                error.textContent = 'Connection error. Please check your network and try again.';
+                error.style.display = 'block';
+                
+                // Reset form state
+                button.classList.remove('loading');
+                button.disabled = false;
+                buttonText.textContent = 'Sign In';
             }
+        });
+        
+        // Auto-clear errors when user starts typing
+        document.getElementById('username').addEventListener('input', clearError);
+        document.getElementById('password').addEventListener('input', clearError);
+        
+        function clearError() {
+            const error = document.getElementById('error');
+            if (error.style.display === 'block') {
+                error.style.display = 'none';
+            }
+        }
+        
+        // Enhanced keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            // Enter key on username field moves to password
+            if (e.key === 'Enter' && e.target.id === 'username') {
+                e.preventDefault();
+                document.getElementById('password').focus();
+            }
+        });
+        
+        // Add subtle hover effects for better interactivity
+        const inputs = document.querySelectorAll('.form-input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('focused');
+            });
         });
     </script>
 </body>

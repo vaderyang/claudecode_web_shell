@@ -88,6 +88,11 @@ app.get('/api/file/*', authenticateUser, async (req, res) => {
   }
 });
 
+// Provide minimal environment info to the client for safe path resolution
+app.get('/api/info', authenticateUser, (req, res) => {
+  res.json({ cwd: process.cwd(), home: process.env.HOME || '' });
+});
+
 const terminals = new Map();
 const userSessions = new Map();
 
@@ -107,8 +112,8 @@ wss.on('connection', (ws, req) => {
   
   const ptyProcess = pty.spawn('claude', [], {
     name: 'xterm-color',
-    cols: 80,
-    rows: 24,
+    cols: 120,
+    rows: 30,
     cwd: process.cwd(),
     env: process.env
   });
@@ -149,8 +154,8 @@ wss.on('connection', (ws, req) => {
         const newTerminalId = uuidv4();
         const newPtyProcess = pty.spawn('claude', [], {
           name: 'xterm-color',
-          cols: data.cols || 80,
-          rows: data.rows || 24,
+          cols: data.cols || 120,
+          rows: data.rows || 30,
           cwd: process.cwd(),
           env: process.env
         });
@@ -197,7 +202,9 @@ wss.on('connection', (ws, req) => {
     }
   });
 
-  ws.send(JSON.stringify({ type: 'ready', terminalId }));
+  setTimeout(() => {
+    ws.send(JSON.stringify({ type: 'ready', terminalId }));
+  }, 100);
 });
 
 server.listen(PORT, () => {
