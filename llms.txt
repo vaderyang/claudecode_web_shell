@@ -1,0 +1,90 @@
+# Claude Code Web Shell
+
+## Project Overview
+
+Claude Code Web Shell is a web-based terminal interface for Claude Code that allows users to interact with Claude Code through their browser. It provides a modern, responsive web interface with real-time terminal emulation.
+
+## Key Features
+
+- **Modern Web UI**: Beautiful Apple/Google inspired design with glassmorphism effects
+- **Theme Support**: Dark and light theme toggle with persistent preferences
+- **Terminal Emulation**: Full-featured terminal using xterm.js with theme-aware colors
+- **Real-time Communication**: WebSocket-based communication for responsive interaction
+- **Authentication**: Simple login system to prevent unauthorized access
+- **Responsive Design**: Mobile-friendly interface that works on all screen sizes
+- **Security**: Session management with bcrypt password hashing
+
+## Technology Stack
+
+- **Backend**: Node.js with Express.js server
+- **Frontend**: HTML5, CSS3, JavaScript with xterm.js for terminal emulation
+- **Communication**: WebSocket (ws library) for real-time terminal interaction
+- **Terminal**: node-pty for pseudo-terminal management
+- **Security**: Express sessions, bcrypt, helmet for security headers
+- **Rate Limiting**: express-rate-limit for API protection
+
+## Architecture
+
+- **Server**: Express.js server handles HTTP requests and WebSocket connections
+- **Terminal Management**: node-pty spawns and manages Claude Code processes
+- **Client**: Web interface connects via WebSocket for real-time terminal interaction
+- **Authentication**: Session-based authentication with configurable credentials
+
+## File Structure
+
+```
+claudecode_web_shell/
+├── server.js              # Main server file with Express and WebSocket setup
+├── public/                 # Static web assets
+│   ├── index.html         # Main web interface
+│   ├── style.css          # Styling with theme support
+│   └── script.js          # Client-side JavaScript
+├── package.json           # Node.js dependencies and scripts
+├── README.md              # Project documentation
+├── LICENSE                # MIT license
+└── llms.txt              # This file - LLM context information
+```
+
+## Dependencies
+
+- express: Web framework
+- ws: WebSocket library
+- node-pty: Pseudo-terminal management
+- bcrypt: Password hashing
+- express-session: Session management
+- uuid: Unique identifier generation
+- helmet: Security headers
+- express-rate-limit: Rate limiting
+
+## Environment Variables
+
+- `PORT`: Server port (default: 3000)
+- `USERNAME`: Login username (default: admin)
+- `PASSWORD`: Login password (default: admin123)
+- `SESSION_SECRET`: Session encryption secret
+
+## Usage Context
+
+This tool is designed for developers who want to:
+- Access Claude Code remotely through a web browser
+- Provide a modern UI for Claude Code interactions
+- Run Claude Code on a server and access it from multiple devices
+- Share Claude Code access with team members through a web interface
+
+## Security Considerations
+
+- Change default credentials in production
+- Use HTTPS in production environments
+- Set strong SESSION_SECRET
+- Consider implementing rate limiting for login attempts
+- Ensure Claude Code CLI has appropriate permissions
+
+## Requirements
+
+- Node.js 16+
+- Claude Code CLI installed and accessible in PATH
+- Modern web browser with WebSocket support
+
+## License
+
+MIT License - see LICENSE file for details
